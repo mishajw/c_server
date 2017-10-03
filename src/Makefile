@@ -14,7 +14,7 @@ $(BIN):
 build: $(TARGET_PATH)
 
 $(TARGET_PATH): $(SRCS) $(INCS) $(BIN)
-	gcc -o $(TARGET_PATH) $(SRCS) $(INCS)
+	gcc -Wall -o $(TARGET_PATH) $(SRCS) $(INCS)
 
 run: $(TARGET_PATH)
 	@$(TARGET_PATH)
