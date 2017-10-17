@@ -8,13 +8,13 @@ struct server;
 struct connection;
 
 // Initialise a server on the port `port_number`
-struct server* create_server(uint16_t port_number);
+struct server* create_server(const uint16_t port_number);
 
 // Wait for a connection to be made the server, and return the connection struct for the new connection
-struct connection* create_connection(struct server *server);
+struct connection* create_connection(const struct server *server);
 
 // Get the next message from a connection
-size_t get_message(struct connection *connection, char *message, size_t message_size);
+size_t get_message(const struct connection *connection, char *message, const size_t message_size);
 
 // Deallocate resources used by the server
 void destroy_server(struct server *server);

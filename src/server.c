@@ -18,7 +18,7 @@ struct connection {
   struct sockaddr_in client_addr;
 };
 
-struct server* create_server(uint16_t port_number) {
+struct server* create_server(const uint16_t port_number) {
   struct server *server = calloc(1, sizeof(struct server));
 
   // Open the socket
@@ -46,7 +46,7 @@ struct server* create_server(uint16_t port_number) {
   return server;
 }
 
-struct connection* create_connection(struct server *server) {
+struct connection* create_connection(const struct server *server) {
   struct connection *connection = calloc(1, sizeof(struct connection));
 
   int client_addr_size = sizeof(connection->client_addr);
@@ -62,7 +62,7 @@ struct connection* create_connection(struct server *server) {
   return connection;
 }
 
-size_t get_message(struct connection *connection, char *message, size_t message_size) {
+size_t get_message(const struct connection *connection, char *message, const size_t message_size) {
   return recv(connection->client_fd, message, message_size, 0);
 }
 
