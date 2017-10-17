@@ -12,3 +12,6 @@ size_t get_message(struct connection *connection, char *message, size_t message_
 
 void destroy_server(struct server *server);
 
+// Deallocate resources used by the connection
+void destroy_connection(struct connection *connection);
+

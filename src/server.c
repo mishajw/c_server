@@ -66,5 +66,11 @@ size_t get_message(struct connection *connection, char *message, size_t message_
   return recv(connection->client_fd, message, message_size, 0);
 }
 
-void destroy_server(struct server *server);
+void destroy_server(struct server *server) {
+  free(server);
+}
+
+void destroy_connection(struct connection *connection) {
+  free(connection);
+}
 

@@ -17,5 +17,8 @@ int main(int argc, char *argv[]) {
   } else {
     perror("Couldn't get message");
   }
+
+  destroy_connection(connection);
+  destroy_server(server);
 }
 
