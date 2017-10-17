@@ -14,7 +14,7 @@ struct server* create_server(const uint16_t port_number);
 struct connection* create_connection(const struct server *server);
 
 // Get the next message from a connection
-size_t get_message(const struct connection *connection, char *message, const size_t message_size);
+size_t get_message(const struct connection *connection, char **message);
 
 // Deallocate resources used by the server
 void destroy_server(struct server *server);

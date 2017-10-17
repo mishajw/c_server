@@ -8,6 +8,8 @@
 
 #include "server.h"
 
+static const uint32_t BUFFER_SIZE = 32;
+
 struct server {
   int socket_fd;
   struct sockaddr_in server_addr;
@@ -62,8 +64,32 @@ struct connection* create_connection(const struct server *server) {
   return connection;
 }
 
-size_t get_message(const struct connection *connection, char *message, const size_t message_size) {
-  return recv(connection->client_fd, message, message_size, 0);
+size_t get_message(const struct connection *connection, char **message) {
+  char *cumulative_buffer = malloc(BUFFER_SIZE);
+  char buffer[BUFFER_SIZE];
+  size_t cumulative_size = 0;
+
+  int recv_size = 0;
+  while ((recv_size = recv(connection->client_fd, &buffer, BUFFER_SIZE, 0)) > 0) {
+    printf("Read in something %d\n", recv_size);
+
+    // Resize the cumulative buffer to fit new data
+    cumulative_buffer = realloc(cumulative_buffer, cumulative_size + recv_size);
+    // Copy data into the cumulative buffer
+    memcpy(&cumulative_buffer[cumulative_size], buffer, recv_size);
+    // Set the new size
+    cumulative_size += recv_size;
+  }
+
+  if (recv_size < 0) {
+    perror("Failed reading message");
+    exit(1);
+  }
+
+  printf("Finished reading %ld\n", cumulative_size);
+
+  *message = cumulative_buffer;
+  return cumulative_size;
 }
 
 void destroy_server(struct server *server) {
