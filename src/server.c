@@ -79,6 +79,10 @@ size_t get_message(const struct connection *connection, char **message) {
     memcpy(&cumulative_buffer[cumulative_size], buffer, recv_size);
     // Set the new size
     cumulative_size += recv_size;
+
+    if (recv_size < BUFFER_SIZE) {
+      break;
+    }
   }
 
   if (recv_size < 0) {
