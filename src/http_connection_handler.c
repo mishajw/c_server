@@ -10,6 +10,6 @@ void handle_connection(struct connection *connection) {
     perror("Couldn't get message");
   }
 
-  fflush(stdout);
+  destroy_connection(connection);
 }
 
