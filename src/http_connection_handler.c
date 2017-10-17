@@ -5,7 +5,9 @@
 #include <string.h>
 
 struct request_header {
-  char *request_type;
+  enum {
+    GET, POST, HEAD
+  } type;
   char *path;
   char *version;
 };
@@ -33,11 +35,18 @@ struct request_header *create_request_header(char *message) {
 
   struct request_header *request_header = calloc(1, sizeof(struct request_header));  
 
-  // TODO: DRY
-  size_t request_type_length = strlen(request_type);
-  request_header->request_type = calloc(1, request_type_length);
-  memcpy(request_header->request_type, request_type, request_type_length);
+  if (strcmp(request_type, "GET") == 0) {
+    request_header->type = GET;
+  } else if (strcmp(request_type, "POST") == 0) {
+    request_header->type = POST;
+  } else if (strcmp(request_type, "HEAD") == 0) {
+    request_header->type = HEAD;
+  } else {
+    fprintf(stderr, "Couldn't parse header type");
+    return NULL;
+  }
 
+  // TODO: DRY
   size_t path_length = strlen(path);
   request_header->path = calloc(1, path_length);
   memcpy(request_header->path, path, path_length);
