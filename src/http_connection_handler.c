@@ -1,12 +1,14 @@
 #include "http_connection_handler.h"
 
 #include <fcntl.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 static const char *DEFAULT_PATH = "/index.html";
+static const char *HTTP_VERSION = "HTTP/1.1";
 
 struct request_header {
   enum {
@@ -24,6 +26,9 @@ void handle_request_header(struct connection *connection, struct request_header 
 
 // Get the absolute path from a request header, defaults to index.html if empty path
 void get_path_from_request_header(struct request_header *request_header, char *path, size_t path_size);
+
+// Send a response header to the connection
+void send_response_header(struct connection *connection, int response_code, bool include_newlines);
 
 // Free resources used by a `request_header`
 void destroy_request_header(struct request_header *request_header);
@@ -93,8 +98,7 @@ void handle_request_header(struct connection *connection, struct request_header 
   }
 
   // Send the header to the client
-  const char *response_header = "HTTP/1.1 200 OK\n\n";
-  send_message(connection, response_header, strlen(response_header));
+  send_response_header(connection, 200, true);
 
   if (request_header->type != HEAD) {
     // Send the file to the client
@@ -111,6 +115,38 @@ void get_path_from_request_header(struct request_header *request_header, char *p
   } else {
     strcat(path, request_header->path);
   }
+}
+
+void send_response_header(struct connection *connection, int response_code, bool include_newlines) {
+  char *response_string = NULL;
+
+  switch (response_code) {
+    case 200:
+      response_string = "OK";
+      break;
+    case 400:
+      response_string = "Bad Request";
+      break;
+    case 404:
+      response_string = "Not Found";
+      break;
+    default:
+      fprintf(stderr, "Couldn't recognise response code, setting response string to \"Unknown code\"");
+      response_string = "Unknown code";
+      break;
+  }
+
+  // +3 for response code, +2 for spaces, +2 for possible newlines, +1 for null byte
+  char response_header[strlen(HTTP_VERSION) + strlen(response_string) + 8];
+  char *format_string;
+  if (include_newlines) {
+    format_string = "%s %d %s\n\n";
+  } else {
+    format_string = "%s %d %s\n";
+  }
+  sprintf(response_header, format_string, HTTP_VERSION, response_code, response_string);
+
+  send_message(connection, response_header, strlen(response_header));
 }
 
 void destroy_request_header(struct request_header *request_header) {
