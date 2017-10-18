@@ -67,6 +67,10 @@ struct request_header *create_request_header(char *message) {
   char *strtok_saveptr;
   char *request_line = strtok_r(message, line_delimiter, &strtok_saveptr);
 
+  // Remove trailing newline from request line
+  // TODO: Avoid doing this
+  request_line[strlen(request_line) - 1] = '\0';
+
   char *request_line_strtok_saveptr;
   const char *request_type = strtok_r(request_line, word_delimiter, &request_line_strtok_saveptr);
   const char *path = strtok_r(NULL, word_delimiter, &request_line_strtok_saveptr);
