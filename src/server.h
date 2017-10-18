@@ -16,6 +16,9 @@ struct connection* create_connection(const struct server *server);
 // Get the next message from a connection
 size_t get_message(const struct connection *connection, char **message);
 
+// Send a message to the other end of a connection
+void send_message(const struct connection *connection, const char *message, const size_t message_length);
+
 // Deallocate resources used by the server
 void destroy_server(struct server *server);
 

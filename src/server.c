@@ -96,6 +96,13 @@ size_t get_message(const struct connection *connection, char **message) {
   return cumulative_size;
 }
 
+void send_message(const struct connection *connection, const char *message, const size_t message_length) {
+  if (write(connection->client_fd, message, message_length) < 0) {
+    perror("Couldn't send message");
+    exit(1);
+  }
+}
+
 void destroy_server(struct server *server) {
   free(server);
 }
