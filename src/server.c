@@ -108,6 +108,7 @@ void destroy_server(struct server *server) {
 }
 
 void destroy_connection(struct connection *connection) {
+  close(connection->client_fd);
   free(connection);
 }
 
