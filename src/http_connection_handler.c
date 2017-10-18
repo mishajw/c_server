@@ -20,7 +20,7 @@ struct request_header {
 struct request_header *create_request_header(char *message);
 
 // Handle a GET request from a connection
-void handle_get_request(struct connection *connection, struct request_header *request_header);
+void handle_request_header(struct connection *connection, struct request_header *request_header);
 
 // Get the absolute path from a request header, defaults to index.html if empty path
 void get_path_from_request_header(struct request_header *request_header, char *path, size_t path_size);
@@ -38,14 +38,7 @@ void handle_connection(struct connection *connection) {
   struct request_header *request_header = create_request_header(message);
   free(message);
 
-  switch (request_header->type) {
-    case GET:
-      handle_get_request(connection, request_header);
-      break;
-    default:
-      fprintf(stderr, "No support for request type\n");
-      break;
-  }
+  handle_request_header(connection, request_header);
 
   destroy_request_header(request_header);
   destroy_connection(connection);
@@ -88,7 +81,7 @@ struct request_header *create_request_header(char *message) {
   return request_header;
 }
 
-void handle_get_request(struct connection *connection, struct request_header *request_header) {
+void handle_request_header(struct connection *connection, struct request_header *request_header) {
   // TODO: Remove magic number for path size
   char absolute_path[1024];
   get_path_from_request_header(request_header, absolute_path, 1024);
@@ -103,9 +96,11 @@ void handle_get_request(struct connection *connection, struct request_header *re
   const char *response_header = "HTTP/1.1 200 OK\n\n";
   send_message(connection, response_header, strlen(response_header));
 
-  // Send the file to the client
-  int file = open(absolute_path, O_RDONLY);
-  send_file(connection, file);
+  if (request_header->type != HEAD) {
+    // Send the file to the client
+    int file = open(absolute_path, O_RDONLY);
+    send_file(connection, file);
+  }
 }
 
 void get_path_from_request_header(struct request_header *request_header, char *path, size_t path_size) {
