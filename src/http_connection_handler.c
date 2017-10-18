@@ -16,6 +16,12 @@ struct request_header {
   char *version;
 };
 
+// Create a `request_header` from the message from the clinet
+struct request_header *create_request_header(char *message);
+
+// Handle a GET request from a connection
+void handle_get_request(struct connection *connection, struct request_header *request_header);
+
 void handle_connection(struct connection *connection) {
   char *message = NULL;
   if (get_message(connection, &message) < 0) {
