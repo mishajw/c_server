@@ -104,10 +104,14 @@ void handle_get_request(struct connection *connection, struct request_header *re
   char file_buffer[stat_results.st_size];
   fread(file_buffer, stat_results.st_size, sizeof(char), file);
 
-  const char *response_header = "HTTP/1.1 200 OK\n";
-  send_message(connection, response_header, strlen(response_header));
+  const char *response_header = "HTTP/1.1 200 OK\n\n";
+  
+  size_t full_response_length = strlen(response_header) + stat_results.st_size;
+  char full_response[full_response_length];
+  strcpy(full_response, response_header);
+  strcat(full_response, file_buffer);
 
   // Send the file to the client
-  send_message(connection, file_buffer, stat_results.st_size);
+  send_message(connection, full_response, full_response_length);
 }
 
