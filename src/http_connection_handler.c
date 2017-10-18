@@ -23,7 +23,7 @@ struct request_header *create_request_header(char *message);
 void handle_get_request(struct connection *connection, struct request_header *request_header);
 
 // Get the absolute path from a request header, defaults to index.html if empty path
-char *get_path_from_request_header(struct request_header *request_header);
+void get_path_from_request_header(struct request_header *request_header, char *path, size_t path_size);
 
 void handle_connection(struct connection *connection) {
   char *message = NULL;
@@ -74,18 +74,20 @@ struct request_header *create_request_header(char *message) {
 
   // TODO: DRY
   size_t path_length = strlen(path);
-  request_header->path = calloc(1, path_length);
+  request_header->path = calloc(1, path_length + 1);
   memcpy(request_header->path, path, path_length);
 
   size_t version_length = strlen(version);
-  request_header->version = calloc(1, version_length);
+  request_header->version = calloc(1, version_length + 1);
   memcpy(request_header->version, version, version_length);
 
   return request_header;
 }
 
 void handle_get_request(struct connection *connection, struct request_header *request_header) {
-  const char *absolute_path = get_path_from_request_header(request_header);
+  // TODO: Remove magic number for path size
+  char absolute_path[1024];
+  get_path_from_request_header(request_header, absolute_path, 1024);
 
   // Check if the file exists and if we can read it
   if (access(absolute_path, F_OK) != 0) {
@@ -102,18 +104,13 @@ void handle_get_request(struct connection *connection, struct request_header *re
   send_file(connection, file);
 }
 
-char *get_path_from_request_header(struct request_header *request_header) {
-  const char *local_path = request_header->path;
+void get_path_from_request_header(struct request_header *request_header, char *path, size_t path_size) {
+  getcwd(path, path_size);
 
-  // If "/" requested, redirect to "index.html"
-  if (strcmp(local_path, "/") == 0) {
-    local_path = DEFAULT_PATH;
+  if (strcmp(request_header->path, "/") == 0) {
+    strcat(path, DEFAULT_PATH);
+  } else {
+    strcat(path, request_header->path);
   }
-
-  char buffer[1024];
-  char *absolute_path = getcwd(buffer, sizeof(buffer));
-  strcat(absolute_path, local_path);
-
-  return absolute_path;
 }
 
