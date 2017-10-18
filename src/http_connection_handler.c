@@ -6,6 +6,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+static const char *DEFAULT_PATH = "/index.html";
+
 struct request_header {
   enum {
     GET, POST, HEAD
@@ -74,23 +76,29 @@ struct request_header *create_request_header(char *message) {
 }
 
 void handle_get_request(struct connection *connection, struct request_header *request_header) {
+  const char *local_path = request_header->path;
+
+  // If "/" requested, redirect to "index.html"
+  if (strcmp(local_path, "/") == 0) {
+    local_path = DEFAULT_PATH;
+  }
+
   char buffer[1024];
-  char *path = getcwd(buffer, sizeof(buffer));
-  printf("%s\n", path);
-  strcat(path, request_header->path);
+  char *absolute_path = getcwd(buffer, sizeof(buffer));
+  strcat(absolute_path, local_path);
 
   // Check if the file exists and if we can read it
-  if (access(path, F_OK) != 0) {
-    fprintf(stderr, "Couldn't find file %s\n", path);
+  if (access(absolute_path, F_OK) != 0) {
+    fprintf(stderr, "Couldn't find file %s\n", absolute_path);
     return;
   }
 
   // Open the file
-  FILE *file = fopen(path, "r");
+  FILE *file = fopen(absolute_path, "r");
 
   // Get the stats for the size field
   struct stat stat_results;
-  stat(path, &stat_results);
+  stat(absolute_path, &stat_results);
 
   // Read the file into memeory
   char file_buffer[stat_results.st_size];
