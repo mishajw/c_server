@@ -43,8 +43,19 @@ void handle_connection(struct connection *connection) {
   struct request_header *request_header = create_request_header(message);
   free(message);
 
+  if (!request_header) {
+    send_response_header(connection, 400, true);
+    goto CLEANUP;
+  }
+
+  if (strcmp(request_header->version, HTTP_VERSION) != 0) {
+    send_response_header(connection, 505, true);
+    goto CLEANUP;
+  }
+
   handle_request_header(connection, request_header);
 
+CLEANUP:
   destroy_request_header(request_header);
   destroy_connection(connection);
 }
@@ -93,7 +104,7 @@ void handle_request_header(struct connection *connection, struct request_header 
 
   // Check if the file exists and if we can read it
   if (access(absolute_path, F_OK) != 0) {
-    fprintf(stderr, "Couldn't find file %s\n", absolute_path);
+    send_response_header(connection, 404, true);
     return;
   }
 
@@ -130,6 +141,9 @@ void send_response_header(struct connection *connection, int response_code, bool
     case 404:
       response_string = "Not Found";
       break;
+    case 505:
+      response_string = "HTTP Version Not Supported";
+      break;
     default:
       fprintf(stderr, "Couldn't recognise response code, setting response string to \"Unknown code\"");
       response_string = "Unknown code";
@@ -150,6 +164,10 @@ void send_response_header(struct connection *connection, int response_code, bool
 }
 
 void destroy_request_header(struct request_header *request_header) {
+  if (!request_header) {
+    return;
+  }
+
   free(request_header->path);
   free(request_header->version);
   free(request_header);
