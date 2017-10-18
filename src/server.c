@@ -1,3 +1,5 @@
+#include "server.h"
+
 #include <arpa/inet.h>
 #include <sys/stat.h>
 #include <sys/sendfile.h>
@@ -7,8 +9,6 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-
-#include "server.h"
 
 static const uint32_t BUFFER_SIZE = 32;
 

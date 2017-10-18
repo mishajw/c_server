@@ -1,3 +1,6 @@
+#ifndef SERVER_H
+#define SERVER_H
+
 #include <inttypes.h>
 #include <stddef.h>
 
@@ -27,4 +30,6 @@ void destroy_server(struct server *server);
 
 // Deallocate resources used by the connection
 void destroy_connection(struct connection *connection);
+
+#endif
 
