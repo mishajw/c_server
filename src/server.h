@@ -19,6 +19,9 @@ size_t get_message(const struct connection *connection, char **message);
 // Send a message to the other end of a connection
 void send_message(const struct connection *connection, const char *message, const size_t message_length);
 
+// Send a file to the client
+void send_file(const struct connection *connection, int file_descriptor);
+
 // Deallocate resources used by the server
 void destroy_server(struct server *server);
 

@@ -1,9 +1,9 @@
 #include "http_connection_handler.h"
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
 static const char *DEFAULT_PATH = "/index.html";
@@ -93,32 +93,13 @@ void handle_get_request(struct connection *connection, struct request_header *re
     return;
   }
 
-  // Open the file
-  FILE *file = fopen(absolute_path, "r");
-
-  // Get the stats for the size field
-  struct stat stat_results;
-  if (stat(absolute_path, &stat_results) != 0) {
-    perror("Couldn't stat file");
-    exit(1);
-  }
-
-  // Read the file into memeory
-  char file_buffer[stat_results.st_size];
-  if (fread(file_buffer, 1, stat_results.st_size, file) != stat_results.st_size) {
-    perror("Didn't read whole file");
-    exit(0);
-  }
-
+  // Send the header to the client
   const char *response_header = "HTTP/1.1 200 OK\n\n";
-  
-  size_t full_response_length = strlen(response_header) + stat_results.st_size;
-  char full_response[full_response_length];
-  memcpy(full_response, response_header, strlen(response_header));
-  memcpy(full_response + strlen(response_header), file_buffer, stat_results.st_size);
+  send_message(connection, response_header, strlen(response_header));
 
   // Send the file to the client
-  send_message(connection, full_response, full_response_length);
+  int file = open(absolute_path, O_RDONLY);
+  send_file(connection, file);
 }
 
 char *get_path_from_request_header(struct request_header *request_header) {

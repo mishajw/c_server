@@ -1,4 +1,6 @@
 #include <arpa/inet.h>
+#include <sys/stat.h>
+#include <sys/sendfile.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -99,6 +101,20 @@ size_t get_message(const struct connection *connection, char **message) {
 void send_message(const struct connection *connection, const char *message, const size_t message_length) {
   if (write(connection->client_fd, message, message_length) < 0) {
     perror("Couldn't send message");
+    exit(1);
+  }
+}
+
+void send_file(const struct connection *connection, int file_descriptor) {
+  // Get the stats for the size field
+  struct stat stat_results;
+  if (fstat(file_descriptor, &stat_results) != 0) {
+    perror("Couldn't stat file");
+    exit(1);
+  }
+
+  if (sendfile(connection->client_fd, file_descriptor, NULL, stat_results.st_size) != stat_results.st_size) {
+    perror("Couldn't send file");
     exit(1);
   }
 }
