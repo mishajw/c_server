@@ -108,8 +108,8 @@ void handle_get_request(struct connection *connection, struct request_header *re
   
   size_t full_response_length = strlen(response_header) + stat_results.st_size;
   char full_response[full_response_length];
-  strcpy(full_response, response_header);
-  strcat(full_response, file_buffer);
+  memcpy(full_response, response_header, strlen(response_header));
+  memcpy(full_response + strlen(response_header), file_buffer, stat_results.st_size);
 
   // Send the file to the client
   send_message(connection, full_response, full_response_length);
