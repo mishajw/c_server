@@ -98,11 +98,17 @@ void handle_get_request(struct connection *connection, struct request_header *re
 
   // Get the stats for the size field
   struct stat stat_results;
-  stat(absolute_path, &stat_results);
+  if (stat(absolute_path, &stat_results) != 0) {
+    perror("Couldn't stat file");
+    exit(1);
+  }
 
   // Read the file into memeory
   char file_buffer[stat_results.st_size];
-  fread(file_buffer, stat_results.st_size, sizeof(char), file);
+  if (fread(file_buffer, 1, stat_results.st_size, file) != stat_results.st_size) {
+    perror("Didn't read whole file");
+    exit(0);
+  }
 
   const char *response_header = "HTTP/1.1 200 OK\n\n";
   
