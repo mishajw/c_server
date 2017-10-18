@@ -25,6 +25,9 @@ void handle_get_request(struct connection *connection, struct request_header *re
 // Get the absolute path from a request header, defaults to index.html if empty path
 void get_path_from_request_header(struct request_header *request_header, char *path, size_t path_size);
 
+// Free resources used by a `request_header`
+void destroy_request_header(struct request_header *request_header);
+
 void handle_connection(struct connection *connection) {
   char *message = NULL;
   if (get_message(connection, &message) < 0) {
@@ -44,6 +47,7 @@ void handle_connection(struct connection *connection) {
       break;
   }
 
+  destroy_request_header(request_header);
   destroy_connection(connection);
 }
 
@@ -112,5 +116,11 @@ void get_path_from_request_header(struct request_header *request_header, char *p
   } else {
     strcat(path, request_header->path);
   }
+}
+
+void destroy_request_header(struct request_header *request_header) {
+  free(request_header->path);
+  free(request_header->version);
+  free(request_header);
 }
 
