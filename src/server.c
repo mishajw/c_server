@@ -73,8 +73,6 @@ size_t get_message(const struct connection *connection, char **message) {
 
   int recv_size = 0;
   while ((recv_size = recv(connection->client_fd, &buffer, BUFFER_SIZE, 0)) > 0) {
-    printf("Read in something %d\n", recv_size);
-
     // Resize the cumulative buffer to fit new data
     cumulative_buffer = realloc(cumulative_buffer, cumulative_size + recv_size);
     // Copy data into the cumulative buffer
@@ -92,7 +90,7 @@ size_t get_message(const struct connection *connection, char **message) {
     exit(1);
   }
 
-  printf("Finished reading %ld\n", cumulative_size);
+  printf("Finished reading %ld bytes from connection\n", cumulative_size);
 
   *message = cumulative_buffer;
   return cumulative_size;
