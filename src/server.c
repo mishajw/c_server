@@ -1,7 +1,6 @@
 #include "server.h"
 
 #include <arpa/inet.h>
-#include <sys/stat.h>
 #include <sys/sendfile.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -103,15 +102,9 @@ void send_message(const struct connection *connection, const char *message, cons
   }
 }
 
-void send_file(const struct connection *connection, int file_descriptor) {
-  // Get the stats for the size field
-  struct stat stat_results;
-  if (fstat(file_descriptor, &stat_results) != 0) {
-    perror("Couldn't stat file");
-    exit(1);
-  }
-
-  if (sendfile(connection->client_fd, file_descriptor, NULL, stat_results.st_size) != stat_results.st_size) {
+void send_file(const struct connection *connection, int file_descriptor, off_t start, off_t end) {
+  off_t total_size = end - start;
+  if (sendfile(connection->client_fd, file_descriptor, &start, end) != total_size) {
     perror("Couldn't send file");
     exit(1);
   }

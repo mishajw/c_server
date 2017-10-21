@@ -5,10 +5,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 static const char *DEFAULT_PATH = "/index.html";
 static const char *HTTP_VERSION = "HTTP/1.1";
+
+struct byte_range {
+  off_t start;
+  off_t end;
+};
 
 struct request_header {
   enum {
@@ -16,6 +22,7 @@ struct request_header {
   } type;
   char *path;
   char *version;
+  struct byte_range *byte_range;
 };
 
 // Create a `request_header` from the message from the clinet
@@ -29,6 +36,9 @@ void get_path_from_request_header(struct request_header *request_header, char *p
 
 // Send a response header to the connection
 void send_response_header(struct connection *connection, int response_code, bool include_newlines);
+
+// Parse the byte range field from a request
+struct byte_range *parse_byte_range(char *byte_range_string);
 
 // Free resources used by a `request_header`
 void destroy_request_header(struct request_header *request_header);
@@ -85,7 +95,7 @@ struct request_header *create_request_header(char *message) {
   } else if (strcmp(request_type, "HEAD") == 0) {
     request_header->type = HEAD;
   } else {
-    fprintf(stderr, "Couldn't parse header type");
+    fprintf(stderr, "Couldn't parse header type\n");
     return NULL;
   }
 
@@ -97,6 +107,30 @@ struct request_header *create_request_header(char *message) {
   size_t version_length = strlen(version);
   request_header->version = calloc(1, version_length + 1);
   memcpy(request_header->version, version, version_length);
+
+  while (true) {
+    const char *current_line = strtok_r(NULL, line_delimiter, &strtok_saveptr);
+
+    if (!current_line) {
+      break;
+    }
+
+    char *colon = strchr(current_line, ':');
+
+    if (!colon || strlen(colon) < 2 || colon[0] != ':' || colon[1] != ' ') {
+      fprintf(stderr, "Couldn't parse header line: %s\n", current_line);
+      continue;
+    }
+
+    char *parameter = colon + 2;
+    colon[0] = '\0';
+    const char *parameter_name = current_line;
+
+    if (strcmp(parameter_name, "Range") == 0) {
+      struct byte_range *byte_range = parse_byte_range(parameter);
+      request_header->byte_range = byte_range;
+    }
+  }
 
   return request_header;
 }
@@ -115,10 +149,33 @@ void handle_request_header(struct connection *connection, struct request_header 
   // Send the header to the client
   send_response_header(connection, 200, true);
 
+  // Open the file for stats and reading
+  int file = open(absolute_path, O_RDONLY);
+
+  // Get the stats for the size field
+  struct stat stat_results;
+  if (fstat(file, &stat_results) != 0) {
+    perror("Couldn't stat file");
+    exit(1);
+  }
+  off_t file_size = stat_results.st_size;
+
   if (request_header->type != HEAD) {
     // Send the file to the client
-    int file = open(absolute_path, O_RDONLY);
-    send_file(connection, file);
+    if (!request_header->byte_range) {
+      send_file(connection, file, 0, file_size);
+    } else {
+      if (request_header->byte_range->end > file_size) {
+        send_response_header(connection, 400, true);
+        return;
+      }
+
+      send_file(
+          connection,
+          file,
+          request_header->byte_range->start,
+          request_header->byte_range->end);
+    }
   }
 }
 
@@ -167,6 +224,36 @@ void send_response_header(struct connection *connection, int response_code, bool
   send_message(connection, response_header, strlen(response_header));
 }
 
+// Parse the byte range field from a request
+struct byte_range *parse_byte_range(char *byte_range_string) {
+  struct byte_range *byte_range = calloc(1, sizeof(struct byte_range));
+
+  const char *expected_beginning = "bytes=";
+
+  if (strlen(byte_range_string) < strlen(expected_beginning)
+      || strncmp(byte_range_string, expected_beginning, strlen(expected_beginning) - 1) != 0) {
+
+    fprintf(stderr, "Couldn't parse byte range: %s\n", byte_range_string);
+    return NULL;
+  }
+
+  char *range_string = byte_range_string + strlen(expected_beginning);
+
+  char *strtok_saveptr;
+  const char *start = strtok_r(range_string, "-", &strtok_saveptr);
+  const char *end = strtok_r(NULL, "-", &strtok_saveptr);
+
+  byte_range->start = atoi(start);
+  byte_range->end = atoi(end);
+
+  printf(
+      "byte range %ld to %ld\n",
+      byte_range->start,
+      byte_range->end);
+
+  return byte_range;
+}
+
 void destroy_request_header(struct request_header *request_header) {
   if (!request_header) {
     return;
@@ -174,6 +261,11 @@ void destroy_request_header(struct request_header *request_header) {
 
   free(request_header->path);
   free(request_header->version);
+
+  if (request_header->byte_range) {
+    free(request_header->byte_range);
+  }
+
   free(request_header);
 }
 

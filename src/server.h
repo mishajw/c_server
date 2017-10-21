@@ -3,6 +3,7 @@
 
 #include <inttypes.h>
 #include <stddef.h>
+#include <sys/types.h>
 
 // Server being used to serve clients
 struct server;
@@ -23,7 +24,7 @@ size_t get_message(const struct connection *connection, char **message);
 void send_message(const struct connection *connection, const char *message, const size_t message_length);
 
 // Send a file to the client
-void send_file(const struct connection *connection, int file_descriptor);
+void send_file(const struct connection *connection, int file_descriptor, off_t start, off_t end);
 
 // Deallocate resources used by the server
 void destroy_server(struct server *server);
