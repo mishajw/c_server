@@ -49,16 +49,16 @@ void handle_connection(struct connection *connection) {
   struct request_header *request_header = create_request_header(message);
   free(message);
 
+  if (!request_header) {
+    send_response_header(connection, 400, true);
+    goto CLEANUP;
+  }
+
   printf(
       "Got request header with type %d, version %s, and path %s\n",
       request_header->type,
       request_header->version,
       request_header->path);
-
-  if (!request_header) {
-    send_response_header(connection, 400, true);
-    goto CLEANUP;
-  }
 
   if (strcmp(request_header->version, HTTP_VERSION) != 0) {
     send_response_header(connection, 505, true);
@@ -98,6 +98,7 @@ struct request_header *create_request_header(char *message) {
     request_header->type = HEAD;
   } else {
     fprintf(stderr, "Couldn't parse header type\n");
+    free(request_header);
     return NULL;
   }
 
@@ -236,6 +237,7 @@ struct byte_range *parse_byte_range(char *byte_range_string) {
       || strncmp(byte_range_string, expected_beginning, strlen(expected_beginning) - 1) != 0) {
 
     fprintf(stderr, "Couldn't parse byte range: %s\n", byte_range_string);
+    free(byte_range);
     return NULL;
   }
 
