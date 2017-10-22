@@ -8,22 +8,21 @@
 
 void handle_multi_threaded(const struct server *server, const void (*callback)(struct connection*)) {
   while (1) {
-    printf("Waiting for next connection\n");
+    // Wait for next connection
     struct connection *connection = create_connection(server);
-    // TODO: Destroy the connection somewhere here, as it is created here
 
+    // When we've got a connection, start a new thread to handle it
     pthread_t current_thread;
     if (pthread_create(&current_thread, NULL, (void * (*)(void *))callback, connection) != 0) {
       perror("Couldn't create thread");
       exit(1);
-    } else {
-      printf("Successfully created thread\n");
     }
   }
 }
 
 void handle_single_threaded(const struct server *server, const void (*callback)(struct connection*)) {
   while (1) {
+    // Wait for a connection and handle it in this thread
     struct connection *connection = create_connection(server);
     callback(connection);
   }

@@ -89,8 +89,6 @@ size_t get_message(const struct connection *connection, char **message) {
     exit(1);
   }
 
-  printf("Finished reading %ld bytes from connection\n", cumulative_size);
-
   *message = cumulative_buffer;
   return cumulative_size;
 }

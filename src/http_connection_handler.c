@@ -53,6 +53,12 @@ void handle_connection(struct connection *connection) {
   struct request_header *request_header = create_request_header(message);
   free(message);
 
+  printf(
+      "Got request header with type %d, version %s, and path %s\n",
+      request_header->type,
+      request_header->version,
+      request_header->path);
+
   if (!request_header) {
     send_response_header(connection, 400, true);
     goto CLEANUP;
@@ -118,7 +124,6 @@ struct request_header *create_request_header(char *message) {
     char *colon = strchr(current_line, ':');
 
     if (!colon || strlen(colon) < 2 || colon[0] != ':' || colon[1] != ' ') {
-      fprintf(stderr, "Couldn't parse header line: %s\n", current_line);
       continue;
     }
 
@@ -221,6 +226,7 @@ void send_response_header(struct connection *connection, int response_code, bool
   }
   sprintf(response_header, format_string, HTTP_VERSION, response_code, response_string);
 
+  printf("Sending response: \"%s\"\n", response_header);
   send_message(connection, response_header, strlen(response_header));
 }
 
