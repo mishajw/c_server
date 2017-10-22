@@ -66,16 +66,22 @@ struct connection* create_connection(const struct server *server) {
 }
 
 size_t get_message(const struct connection *connection, char **message) {
-  char *cumulative_buffer = malloc(BUFFER_SIZE);
+  *message = calloc(1, BUFFER_SIZE);
   char buffer[BUFFER_SIZE];
   size_t cumulative_size = 0;
 
   int recv_size = 0;
   while ((recv_size = recv(connection->client_fd, &buffer, BUFFER_SIZE, 0)) > 0) {
     // Resize the cumulative buffer to fit new data
-    cumulative_buffer = realloc(cumulative_buffer, cumulative_size + recv_size);
+    char *realloced_message = realloc(*message, cumulative_size + recv_size);
+    if (!realloced_message) {
+      fprintf(stderr, "Can't realloc memory\n");
+      exit(1);
+    }
+    *message = realloced_message;
+
     // Copy data into the cumulative buffer
-    memcpy(&cumulative_buffer[cumulative_size], buffer, recv_size);
+    memcpy(&(*message)[cumulative_size], buffer, recv_size);
     // Set the new size
     cumulative_size += recv_size;
 
@@ -89,7 +95,6 @@ size_t get_message(const struct connection *connection, char **message) {
     exit(1);
   }
 
-  *message = cumulative_buffer;
   return cumulative_size;
 }
 

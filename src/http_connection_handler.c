@@ -45,11 +45,7 @@ void destroy_request_header(struct request_header *request_header);
 
 void handle_connection(struct connection *connection) {
   char *message = NULL;
-  if (get_message(connection, &message) < 0) {
-    perror("Couldn't get message");
-    exit(1);
-  }
-
+  get_message(connection, &message);
   struct request_header *request_header = create_request_header(message);
   free(message);
 
