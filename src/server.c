@@ -73,7 +73,7 @@ size_t get_message(const struct connection *connection, char **message) {
   int recv_size = 0;
   while ((recv_size = recv(connection->client_fd, &buffer, BUFFER_SIZE, 0)) > 0) {
     // Resize the cumulative buffer to fit new data
-    char *realloced_message = realloc(*message, cumulative_size + recv_size);
+    char *realloced_message = realloc(*message, cumulative_size + recv_size + 1);
     if (!realloced_message) {
       fprintf(stderr, "Can't realloc memory\n");
       exit(1);
@@ -89,6 +89,9 @@ size_t get_message(const struct connection *connection, char **message) {
       break;
     }
   }
+
+  // Append NULL to message
+  (*message)[cumulative_size - 1] = '\0';
 
   if (recv_size < 0) {
     perror("Failed reading message");
