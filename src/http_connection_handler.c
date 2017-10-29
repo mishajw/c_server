@@ -79,10 +79,20 @@ struct request_header *create_request_header(char *message) {
   char *strtok_saveptr;
   char *request_line = strtok_r(message, line_delimiter, &strtok_saveptr);
 
+  if (!request_line) {
+    fprintf(stderr, "Couldn't get request header from message: %s\n", message);
+    return NULL;
+  }
+
   char *request_line_strtok_saveptr;
   const char *request_type = strtok_r(request_line, word_delimiter, &request_line_strtok_saveptr);
   const char *path = strtok_r(NULL, word_delimiter, &request_line_strtok_saveptr);
   const char *version = strtok_r(NULL, word_delimiter, &request_line_strtok_saveptr);
+
+  if (!request_type || !path || !version) {
+    fprintf(stderr, "Couldn't parse request header: %s\n", request_line);
+    return NULL;
+  }
 
   struct request_header *request_header = calloc(1, sizeof(struct request_header));  
 
