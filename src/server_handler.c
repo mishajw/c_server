@@ -20,7 +20,7 @@ void handle_multi_threaded(const struct server *server, void (*const callback)(s
   }
 }
 
-void handle_single_threaded(const struct server *server, const void (*callback)(struct connection*)) {
+void handle_single_threaded(const struct server *server, void (*const callback)(struct connection*)) {
   while (1) {
     // Wait for a connection and handle it in this thread
     struct connection *connection = create_connection(server);
