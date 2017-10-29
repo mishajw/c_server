@@ -16,9 +16,14 @@ build: $(TARGET_PATH)
 $(TARGET_PATH): $(SRCS) $(INCS) $(BIN)
 	gcc -O2 -g -Wall -Wpedantic -pthread -o $(TARGET_PATH) $(SRCS) $(INCS)
 
+.PHONY: run
 run: $(TARGET_PATH)
 	@$(TARGET_PATH)
 
+.PHONY: clean
 clean:
 	@rm -rf $(BIN)
+
+.PHONY: all
+all: $(TARGET_PATH)
 
