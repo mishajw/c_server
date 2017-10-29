@@ -17,6 +17,12 @@ void handle_multi_threaded(const struct server *server, void (*const callback)(s
       perror("Couldn't create thread");
       exit(1);
     }
+
+    if (current_thread) {
+      if (pthread_detach(current_thread) == 0) {
+        perror("Couldn't detatch thread");
+      }
+    }
   }
 }
 
